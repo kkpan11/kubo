@@ -131,13 +131,41 @@ The above will replace implicit HTTP routers with single one, allowing for
 inspection/debug of HTTP requests sent by Kubo via `while true ; do nc -l 7423; done`
 or more advanced tools like [mitmproxy](https://docs.mitmproxy.org/stable/#mitmproxy).
 
+Default: `config.DefaultHTTPRouters`
+
+## `IPFS_HTTP_ROUTERS_FILTER_PROTOCOLS`
+
+Overrides values passed with `filter-protocols` parameter defined in IPIP-484.
+Value is space-separated.
+
+```console
+$ IPFS_HTTP_ROUTERS_FILTER_PROTOCOLS="unknown transport-bitswap transport-foo" ipfs daemon
+```
+
+Default: `config.DefaultHTTPRoutersFilterProtocols`
+
+## `IPFS_CONTENT_BLOCKING_DISABLE`
+
+Disables the content-blocking subsystem. No denylists will be watched and no
+content will be blocked.
+
 ## `LIBP2P_TCP_REUSEPORT`
 
 Kubo tries to reuse the same source port for all connections to improve NAT
 traversal. If this is an issue, you can disable it by setting
 `LIBP2P_TCP_REUSEPORT` to false.
 
-Default: true
+Default: `true`
+
+## `LIBP2P_TCP_MUX`
+
+By default Kubo tries to reuse the same listener port for raw TCP and WebSockets transports via experimental `libp2p.ShareTCPListener()` feature introduced in [go-libp2p#2984](https://github.com/libp2p/go-libp2p/pull/2984).
+If this is an issue, you can disable it by setting `LIBP2P_TCP_MUX` to `false` and use separate ports for each TCP transport.
+
+> [!CAUTION]
+> This configuration option may be removed once `libp2p.ShareTCPListener()`  becomes default in go-libp2p.
+
+Default: `true`
 
 ## `LIBP2P_MUX_PREFS`
 

@@ -90,7 +90,7 @@ func BaseRouting(cfg *config.Config) interface{} {
 			}
 		}
 
-		if dualDHT != nil && cfg.Routing.AcceleratedDHTClient {
+		if dualDHT != nil && cfg.Routing.AcceleratedDHTClient.WithDefault(config.DefaultAcceleratedDHTClient) {
 			cfg, err := in.Repo.Config()
 			if err != nil {
 				return out, err
@@ -126,7 +126,7 @@ func BaseRouting(cfg *config.Config) interface{} {
 				return out, err
 			}
 			routers := []*routinghelpers.ParallelRouter{
-				{Router: fullRTClient},
+				{Router: fullRTClient, DoNotWaitForSearchValue: true},
 			}
 			routers = append(routers, httpRouters...)
 			router := routinghelpers.NewComposableParallel(routers)
@@ -184,9 +184,8 @@ type p2pOnlineRoutingIn struct {
 	Validator record.Validator
 }
 
-// Routing will get all routers obtained from different methods
-// (delegated routers, pub-sub, and so on) and add them all together
-// using a TieredRouter.
+// Routing will get all routers obtained from different methods (delegated
+// routers, pub-sub, and so on) and add them all together using a TieredRouter.
 func Routing(in p2pOnlineRoutingIn) irouting.ProvideManyRouter {
 	routers := in.Routers
 
@@ -197,15 +196,17 @@ func Routing(in p2pOnlineRoutingIn) irouting.ProvideManyRouter {
 	var cRouters []*routinghelpers.ParallelRouter
 	for _, v := range routers {
 		cRouters = append(cRouters, &routinghelpers.ParallelRouter{
-			IgnoreError: true,
-			Router:      v.Routing,
+			IgnoreError:             true,
+			DoNotWaitForSearchValue: true,
+			Router:                  v.Routing,
 		})
 	}
 
 	return routinghelpers.NewComposableParallel(cRouters)
 }
 
-// OfflineRouting provides a special Router to the routers list when we are creating a offline node.
+// OfflineRouting provides a special Router to the routers list when we are
+// creating an offline node.
 func OfflineRouting(dstore ds.Datastore, validator record.Validator) p2pRouterOut {
 	return p2pRouterOut{
 		Router: Router{
@@ -231,7 +232,6 @@ func PubsubRouter(mctx helpers.MetricsCtx, lc fx.Lifecycle, in p2pPSRoutingIn) (
 		in.Validator,
 		namesys.WithRebroadcastInterval(time.Minute),
 	)
-
 	if err != nil {
 		return p2pRouterOut{}, nil, err
 	}

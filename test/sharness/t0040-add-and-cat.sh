@@ -355,10 +355,10 @@ test_add_cat_file() {
     test_cmp expected actual
   '
 
-    test_must_fail "ipfs add with multiple files of same name but different dirs fails" '
+    test_expect_success "ipfs add with multiple files of same name but different dirs fails" '
       mkdir -p mountdir/same-file/ &&
       cp mountdir/hello.txt mountdir/same-file/hello.txt &&
-      ipfs add mountdir/hello.txt mountdir/same-file/hello.txt >actual &&
+      test_expect_code 1 ipfs add mountdir/hello.txt mountdir/same-file/hello.txt >actual &&
       rm mountdir/same-file/hello.txt  &&
       rmdir mountdir/same-file
     '
@@ -466,6 +466,15 @@ test_add_cat_file() {
     test_should_contain "test" lsout &&
     test_should_not_contain "mfs1.txt" lsout &&
     test_should_not_contain "mfs2.txt" lsout &&
+    ipfs files rm -r --force /mfs
+  '
+
+  # confirm -w and --to-files are exclusive
+  # context: https://github.com/ipfs/kubo/issues/10611
+  test_expect_success "ipfs add -r -w dir --to-files /mfs/subdir5/ errors (-w and --to-files are exclusive)" '
+    ipfs files mkdir -p /mfs/subdir5 &&
+    test_expect_code 1 ipfs add -r -w test --to-files /mfs/subdir5/ >actual 2>&1 &&
+    test_should_contain "Error" actual &&
     ipfs files rm -r --force /mfs
   '
 
@@ -873,17 +882,17 @@ test_expect_success "'ipfs add -rn' succeeds" '
   mkdir -p mountdir/moons/saturn &&
   echo "Hello Europa!" >mountdir/moons/jupiter/europa.txt &&
   echo "Hello Titan!" >mountdir/moons/saturn/titan.txt &&
-  echo "hey youre no moon!" >mountdir/moons/mercury.txt &&
+  echo "hey you are no moon!" >mountdir/moons/mercury.txt &&
   ipfs add -rn mountdir/moons >actual
 '
 
 test_expect_success "'ipfs add -rn' output looks good" '
-  MOONS="QmVKvomp91nMih5j6hYBA8KjbiaYvEetU2Q7KvtZkLe9nQ" &&
+  MOONS="QmbGoaQZm8kjYfCiN1aBsgwhqfUBGDYTrDb91Mz7Dvq81B" &&
   EUROPA="Qmbjg7zWdqdMaK2BucPncJQDxiALExph5k3NkQv5RHpccu" &&
   JUPITER="QmS5mZddhFPLWFX3w6FzAy9QxyYkaxvUpsWCtZ3r7jub9J" &&
   SATURN="QmaMagZT4rTE7Nonw8KGSK4oe1bh533yhZrCo1HihSG8FK" &&
   TITAN="QmZzppb9WHn552rmRqpPfgU5FEiHH6gDwi3MrB9cTdPwdb" &&
-  MERCURY="QmUJjVtnN8YEeYcS8VmUeWffTWhnMQAkk5DzZdKnPhqUdK" &&
+  MERCURY="QmRsTB5CpEUvDUpDgHCzb3VftZ139zrk9zs5ZcgYh9TMPJ" &&
   echo "added $EUROPA moons/jupiter/europa.txt" >expected &&
   echo "added $MERCURY moons/mercury.txt" >>expected &&
   echo "added $TITAN moons/saturn/titan.txt" >>expected &&
